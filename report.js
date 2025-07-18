@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const reportForm = document.getElementById('report-form');
     const backButton = document.getElementById('back-button');
-    const issueTypeSelect = document.getElementById('issueType');
+    const issueTypeSelect = document.getElementById('issue_type');
     const locationInput = document.getElementById('location');
     const descriptionTextarea = document.getElementById('description');
     const submitButton = document.getElementById('submit-report-button');
@@ -27,41 +27,69 @@ document.addEventListener('DOMContentLoaded', () => {
         issueTypeSelect.appendChild(option);
     });
 
+    const facilityIdInput = document.getElementById('facility_id');
+    const buildingInput = document.getElementById('building');
+
+    // Helper to get query param
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    // Auto-fill facility_id from query param
+    const facilityId = getQueryParam('facility_id');
+    if (facilityId) {
+        facilityIdInput.value = facilityId;
+        // Fetch facility details from backend
+        fetch(`http://localhost:3001/facility/${facilityId}`)
+            .then(res => {
+                if (!res.ok) throw new Error('Facility not found');
+                return res.json();
+            })
+            .then(facility => {
+                buildingInput.value = facility.building || '';
+            })
+            .catch(err => {
+                buildingInput.value = '';
+                console.error('Error fetching facility:', err);
+            });
+    }
+
     // Simple in-memory storage for reports (for demonstration)
     // In a real application, you might use localStorage, IndexedDB, or a backend API
-    let reports = [];
+    // let reports = [];
 
     // Load reports from localStorage (if available)
-    const loadReports = () => {
-        try {
-            const storedReports = localStorage.getItem('menstrualHygieneReports');
-            if (storedReports) {
-                reports = JSON.parse(storedReports);
-            }
-        } catch (e) {
-            console.error("Error loading reports from localStorage", e);
-        }
-    };
+    // const loadReports = () => {
+    //     try {
+    //         const storedReports = localStorage.getItem('menstrualHygieneReports');
+    //         if (storedReports) {
+    //             reports = JSON.parse(storedReports);
+    //         }
+    //     } catch (e) {
+    //         console.error("Error loading reports from localStorage", e);
+    //     }
+    // };
 
     // Save reports to localStorage
-    const saveReports = () => {
-        try {
-            localStorage.setItem('menstrualHygieneReports', JSON.stringify(reports));
-        } catch (e) {
-            console.error("Error saving reports to localStorage", e);
-        }
-    };
+    // const saveReports = () => {
+    //     try {
+    //         localStorage.setItem('menstrualHygieneReports', JSON.stringify(reports));
+    //     } catch (e) {
+    //         console.error("Error saving reports to localStorage", e);
+    //     }
+    // };
 
     // Add a new report
-    const addReport = (reportData) => {
-        const newReport = {
-            id: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            ...reportData,
-        };
-        reports.unshift(newReport); // Add to the beginning
-        saveReports();
-    };
+    // const addReport = (reportData) => {
+    //     const newReport = {
+    //         id: crypto.randomUUID(),
+    //         timestamp: new Date().toISOString(),
+    //         ...reportData,
+    //     };
+    //     reports.unshift(newReport); // Add to the beginning
+    //     saveReports();
+    // };
 
     // Validation Service (simplified version of ReportValidationService)
     const ReportValidationService = {
@@ -195,17 +223,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const { priority } = await response.json();
             
-            // Add report with priority
-            addReport({ ...sanitizedData, priority });
+            // Add report with priority - now handled by server
+            // addReport({ ...sanitizedData, priority });
 
             // Log the complete report to the browser console
             console.log("Report submitted with priority:", { ...sanitizedData, priority });
 
             successAlert.style.display = 'flex';
-            setTimeout(() => {
-                successAlert.style.display = 'none';
-                window.location.href = 'dashboard.html'; // Redirect to dashboard
-            }, 2000);
+            // setTimeout(() => {
+            //     successAlert.style.display = 'none';
+            //     window.location.href = 'dashboard.html'; // Redirect to dashboard
+            // }, 2000);
 
             // Reset form after successful submission
             reportForm.reset();
@@ -227,5 +255,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Initial load of reports
-    loadReports();
+    // loadReports();
 }); 
