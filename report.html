@@ -5,8 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report an Issue - Menstrual Hygiene Reporting System</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Add basic header styles here or in style.css */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        .main-header .logo {
+            height: 40px; /* Adjust as needed */
+            width: auto;
+        }
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 25px;
+        }
+        .main-nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            font-size: 17px;
+            transition: color 0.3s ease;
+        }
+        .main-nav a:hover {
+            color: #4CAF50;
+        }
+        .auth-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .auth-buttons .admin-login-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .auth-buttons .admin-login-btn:hover {
+            background-color: #45a049;
+        }
+        body {
+            padding-top: 80px; /* To account for fixed header */
+        }
+    </style>
 </head>
 <body>
+    <header class="main-header">
+        <div class="left-section">
+            <img src="logo.png" alt="Logo" class="logo">
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="report.html">Report</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="auth-buttons">
+            <button class="admin-login-btn" onclick="location.href='admin_login.html'">Admin Login</button>
+        </div>
+    </header>
+
     <div class="container">
         <div class="max-w-2xl mx-auto">
             <!-- Header -->
@@ -35,25 +105,41 @@
 
                 <div class="card-content">
                     <form id="report-form" class="space-y-6">
-                        <!-- Issue Type Selection -->
+
+                        <!-- Facility ID (from query param) -->
                         <div class="form-group">
-                            <label for="issueType">Issue Type <span class="required">*</span></label>
-                            <select id="issueType" class="select-trigger">
-                                <option value="" disabled selected>Select the type of issue</option>
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                            <p id="issueType-error" class="error-message" style="display:none;">
+                            <label for="facility_id">Facility ID <span class="required">*</span></label>
+                            <input type="text" id="facility_id" name="facility_id" class="input-field" readonly>
+                            <p id="facility_id-error" class="error-message" style="display:none;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                                 <span></span>
                             </p>
                         </div>
 
-                        <!-- Location Input -->
+                        <!-- Issue Type Dropdown -->
                         <div class="form-group">
-                            <label for="location">Location <span class="required">*</span></label>
-                            <input type="text" id="location" placeholder="e.g., Building A, 2nd floor restroom" class="input-field">
-                            <p id="location-error" class="error-message" style="display:none;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucude-alert-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                            <label for="issue_type">Issue Type <span class="required">*</span></label>
+                            <select id="issue_type" name="issue_type" class="select-trigger" required>
+                                <option value="" disabled selected>Select the type of issue</option>
+                                <option value="dirty_restroom">Dirty restroom</option>
+                                <option value="overflowing_bin">Overflowing bin</option>
+                                <option value="no_dispenser">No dispenser</option>
+                                <option value="no_water">No water</option>
+                                <option value="safety_concern">Safety concern</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <p id="issue_type-error" class="error-message" style="display:none;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                                <span></span>
+                            </p>
+                        </div>
+
+                        <!-- Building (placeholder, logic to be added) -->
+                        <div class="form-group">
+                            <label for="building">Building</label>
+                            <input type="text" id="building" name="building" class="input-field" placeholder="(To be auto-filled)">
+                            <p id="building-error" class="error-message" style="display:none;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                                 <span></span>
                             </p>
                         </div>
@@ -61,7 +147,7 @@
                         <!-- Description Textarea -->
                         <div class="form-group">
                             <label for="description">Description <span class="optional">(Optional)</span></label>
-                            <textarea id="description" placeholder="Please provide additional details about the issue..." rows="4" class="textarea-field"></textarea>
+                            <textarea id="description" name="description" placeholder="Please provide additional details about the issue..." rows="4" class="textarea-field"></textarea>
                             <p id="description-error" class="error-message" style="display:none;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-circle"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                                 <span></span>
