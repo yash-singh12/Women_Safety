@@ -3,13 +3,92 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3001; // Use port 3001 for the backend
 
+// Supabase client setup
+const { createClient } = require('@supabase/supabase-js');
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// Endpoint to get facility details by id from Supabase
+app.get('/facility/:id', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('facilities')
+            .select('*')
+            .eq('id', req.params.id)
+            .single();
+        if (error || !data) {
+            return res.status(404).json({ error: 'Facility not found' });
+        }
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch facility' });
+    }
+});
+
+// File path for reports data
+const REPORTS_FILE = path.join(__dirname, 'reports.json');
+
+// In-memory storage for reports (for demonstration)
+let reports = [];
+
+// Function to load reports from file
+const loadReports = () => {
+    if (fs.existsSync(REPORTS_FILE)) {
+        const data = fs.readFileSync(REPORTS_FILE, 'utf8');
+        reports = JSON.parse(data);
+    } else {
+        reports = [];
+    }
+};
+
+// Function to save reports to file
+const saveReports = () => {
+    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2), 'utf8');
+};
+
+// Load reports on server start
+loadReports();
+
 // Middleware
 app.use(cors()); // Enable CORS for all origins
 app.use(bodyParser.json());
+
+// Middleware to protect admin routes
+const authenticateAdmin = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Authorization header missing' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (token === 'fake-admin-token') { // Replace with actual token validation (e.g., JWT.verify)
+    next();
+  } else {
+    return res.status(403).json({ message: 'Forbidden: Invalid token' });
+  }
+};
+
+// Admin Login Endpoint
+app.post('/admin/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Simple authentication (for demonstration purposes)
+  if (username === 'admin' && password === 'password123') {
+    // In a real application, you would generate a JWT or a session token here
+    const token = 'fake-admin-token';
+    return res.json({ message: 'Login successful', token });
+  } else {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+});
 
 // Configure Gemini API
 const API_KEY = process.env.GEMINI_API_KEY;
@@ -80,11 +159,37 @@ app.post('/generate-priority', async (req, res) => {
 
   try {
     const priority = await generatePriority(issueType, location, description);
+    const newReport = {
+        id: crypto.randomUUID(), // Node.js crypto module for UUID
+        timestamp: new Date().toISOString(),
+        issueType,
+        location,
+        description,
+        priority
+    };
+    reports.unshift(newReport); // Add to the beginning
+    saveReports(); // Save reports after adding new one
     res.json({ priority });
   } catch (error) {
     console.error("Failed to generate priority:", error);
     res.status(500).json({ error: "Failed to generate priority." });
   }
+});
+
+// Admin Reports Endpoint
+app.get('/admin/reports', authenticateAdmin, (req, res) => {
+    res.json(reports);
+});
+
+// Public Reports Endpoint
+app.get('/public/reports', (req, res) => {
+    res.json(reports.map(report => ({
+        id: report.id,
+        issueType: report.issueType,
+        location: report.location,
+        priority: report.priority,
+        timestamp: report.timestamp
+    })));
 });
 
 // Basic route for testing server status
